@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BirdApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261105114838_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20261109204645_InitMigration")]
+    partial class InitMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -115,12 +115,21 @@ namespace BirdApi.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("HasSubscription")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("SubscriptionExpiresAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Username")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WalletAdress")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

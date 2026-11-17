@@ -16,9 +16,9 @@ public class AuthController : ControllerBase
     private readonly AppDbContext _database;
     private readonly IConfiguration _configuration;
 
-    public AuthController(AppDbContext context, IConfiguration configuration)
+    public AuthController(AppDbContext database, IConfiguration configuration)
     {
-        _database = context;
+        _database = database;
         _configuration = configuration;
     }
 

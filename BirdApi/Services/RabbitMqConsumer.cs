@@ -36,7 +36,7 @@ public class RabbitMQConsumer : BackgroundService
             
             try
             {
-                using var scope = _serviceProvider.CreateScope();//-----------врменное подлючение к бд для AppDbContext
+                using var scope = _serviceProvider.CreateScope();//---------------------------врменное подлючение к бд для AppDbContext
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();//---создаем прямую переменную для работой с бд
 
                 var data = JsonSerializer.Deserialize<MessageDto>(messageJson);//-------------преобразовываем строку похожую на json в экземляр класса MessageDto 
@@ -53,7 +53,7 @@ public class RabbitMQConsumer : BackgroundService
                         CreatedAt = DateTime.UtcNow
                     };//-----------------------------------------создаем из данных типо экземпляр для отправку в бд BaseQuary
 
-                    dbContext.MainTables.Add(rabbitAnswer);//---запись в бд но настоящее сохранение в бд строкой ниже
+                    dbContext.MainTables.Add(rabbitAnswer);//----запись в бд но настоящее сохранение в бд строкой ниже
                     await dbContext.SaveChangesAsync();//--------сохранение изменений в бд
                 }
             }

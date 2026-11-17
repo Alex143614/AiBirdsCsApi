@@ -17,40 +17,57 @@ public class BirdsController : ControllerBase
     private readonly AppDbContext _database;//------------к базе данных
     private readonly BirdAiService _aiService;//----------подключение к апи пайтона
     private readonly RabbitMqProducer _rabbitMq;//--------брокера сообщений
+    private readonly CheckBirdPassService _checkPass;//---для проверки наличиния подписки и лимита пользователя на запросы
     private int UserId => int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);//---получение айдишника текущего пользователя
     //---они будут подключаться в program.cs 
-    public BirdsController(AppDbContext context, BirdAiService aiService, RabbitMqProducer rabbitMq)
+    public BirdsController(AppDbContext context, BirdAiService aiService, RabbitMqProducer rabbitMq, CheckBirdPassService checkPass)
     {
         _database = context;
         _aiService = aiService;
         _rabbitMq = rabbitMq;
+        _checkPass = checkPass;
+
     }
 
     [HttpPost("image")]//------------------------------------------------------------------------------запрос для анализа url изображения. возвращает название птицы и увереность ИИ в своем ответе 
     public async Task<IActionResult> AnalyzeImage(UrlRequest request)//--------------------------------асинхронная функция которая принимает url картинки
     {
+        if (await _checkPass.IsLimitExceededAsync(UserId)){
+            return Ok(new BirdUrlResponse{Species = "limit", Confidence = 0});//-----------------------проверка наличие подписки и віставление лимит ан 10 запрсов 
+        }
         var ai = await _aiService.PredictImageAsync(request.Url);//------------------------------------обращение к ии, await потому что асинхроно, _aiService потому что обращаемя к файлу BirdAiService где находиться функция PredictImageAsync в которую передается url изображения
-        var img = new ImageBirdTable { ImageUrl = request.Url, Confidence = ai.Confidence };//---------создание записи для возврата, ImageQuery это модель, взята с того же файла 
+        var img = new ImageBirdTable { ImageUrl = request.Url, Confidence = ai.Confidence };//---------создание записи для возврата, ImageBirdTable это модель, взята с того же файла 
         _database.ImageBirdTables.Add(img);//----------------------------------------------------------записываем изменения но сохранение в бд будут ниже
-        await _database.SaveChangesAsync();//----------------------------------------------------------запись в бд таблицы ImageQuery 
-        await _rabbitMq.SendRabbitMqMessageAsync(UserId, "image", img.Id, ai.Species, request.Url);//--запись в бд таблицы BaseQuery через rabbitMq, так как нам не нужно ждать записи, я получил айди и знаю url, пускай записшет после того как пользователь получит ответ
+        await _database.SaveChangesAsync();//----------------------------------------------------------запись в бд таблицы ImageBirdTabke
+        await _rabbitMq.SendRabbitMqMessageAsync(UserId, "image", img.Id, ai.Species, request.Url);//--запись в бд таблицы MainTable через rabbitMq, так как нам не нужно ждать записи, я получил айди и знаю url, пускай записшет после того как пользователь получит ответ
         return Ok(new BirdUrlResponse{Species = ai.Species, Confidence = ai.Confidence});//------------возврат результата
     }
 
     [HttpPost("audio")]//------------------------------------------------------------------------------запрос для анализа типо url ссылки на аудио, возвращает вид птицы по этому айдио
     public async Task<IActionResult> AnalyzeAudio(UrlRequest request)//--------------------------------асинхронная функция которая принимает типо url установки аудио
     {
+        if (await _checkPass.IsLimitExceededAsync(UserId)){
+            return Ok(new BirdUrlResponse{Species = "limit", Confidence = 0});//-----------------------проверка наличие подписки и віставление лимит ан 10 запрсов 
+        }
         var ai = await _aiService.PredictAudioAsync(request.Url);//------------------------------------обращение к ии пайтону, PredictAudioAsync прописан в файле BirdAiService
-        var snd = new SoundBirdTable { AudioUrl = request.Url, Confidence = ai.Confidence };//---------создание записи для возврата, SoundQuery это модель, взята с того же файла 
+        var snd = new SoundBirdTable { AudioUrl = request.Url, Confidence = ai.Confidence };//---------создание записи для возврата, SoundBirdTable это модель, взята с того же файла 
         _database.SoundBirdTables.Add(snd);//----------------------------------------------------------записываем изменения но сохранение в бд будут ниже
         await _database.SaveChangesAsync();//----------------------------------------------------------запись в бд 
-        await _rabbitMq.SendRabbitMqMessageAsync(UserId, "sound", snd.Id, ai.Species, request.Url);//--запись в бд таблицы BaseQuery через rabbitMq, так как нам не нужно ждать записи, я получил айди и знаю url, пускай записшет после того как пользователь получит ответ
+        await _rabbitMq.SendRabbitMqMessageAsync(UserId, "sound", snd.Id, ai.Species, request.Url);//--запись в бд таблицы MainTable через rabbitMq, так как нам не нужно ждать записи, я получил айди и знаю url, пускай записшет после того как пользователь получит ответ
         return Ok(new BirdUrlResponse{Species = ai.Species, Confidence = ai.Confidence});//------------возврат результата
     }
 
     [HttpPost("info")]//-------------------------------------------------------------------------------запрос для получения информации по виду птицы
     public async Task<IActionResult> GetBirdInfo(InfoRequest request)//--------------------------------асинхронная функция которая принимает вид птицы и вохвращает доп информацию о ней
     {
+         if (await _checkPass.IsLimitExceededAsync(UserId)){
+            return Ok(new BirdInfoResponse{
+                Species = "limit",
+                Appearance = null,
+                Habitat = null,
+                Diet = null
+            });//--------------------------------------------------------------------------------------проверка наличие подписки и віставление лимит ан 10 запрсов 
+        }
         var cache = await GetFromCache(request.Species);//---------------------------------------------изначально для получения информации о птице я проверяю нету ли такой же птицы в бд чтобы не открывать сервер и только потом делать запрос к апи
         if (cache != null) 
         {
