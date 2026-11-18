@@ -62,7 +62,7 @@ public class StatisticsController : ControllerBase
                     RequestCount = top.RequestCount
                 })
             .ToListAsync();
-        return Ok();
+        return Ok(topUsers);
     }
     [HttpGet("top_birds")]
     //---функция которая возвращает список птиц которые чаще всего попадались в запросах от большего к меньшему с пагинацией
@@ -82,4 +82,4 @@ public class StatisticsController : ControllerBase
             .ToListAsync();//------------------------------------------------обращение к бд и возврат результата в виде списка
         return Ok(birds);//--------------------------------------------------возврат результата
     }
-}
+}//fuser -k 5208/tcp

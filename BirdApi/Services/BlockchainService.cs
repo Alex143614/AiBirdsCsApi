@@ -12,8 +12,8 @@ public class BlockchainService
     private readonly string _rpcUrl;//-----------------------порт для общения с блокчейном
     public BlockchainService(IConfiguration configuration)//-IConfiguration дотсает информацию из appsettings json
     {
-        _rpcUrl = configuration["Blockchain:RpcUrl"] ?? "http://127.0.0.1:8545";//----записывает информацию порта из json либо если нет то конкретный порт
-        _contractAddress = configuration["Blockchain:ContractAddress"] ?? "";//-------берет адресс контракта из json
+        _rpcUrl = configuration["Blockchain:RpcUrl"];//----записывает информацию порта из json либо если нет то конкретный порт
+        _contractAddress = configuration["Blockchain:ContractAddress"];//-------берет адресс контракта из json
         _web3 = new Web3(_rpcUrl);//--------------------------------------------------записывает порт в обьект библиотеки который общается с блокчейном
     }
     //---функция для проверки подписки по 

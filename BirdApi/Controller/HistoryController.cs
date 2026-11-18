@@ -20,7 +20,7 @@ public class HistoryController : ControllerBase
     //---получаем айди пользователя
     private int UserId => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-    [HttpGet]
+    [HttpGet("history")]
     public async Task<IActionResult> GetHistory()
     {
         var allSearch = await _database.MainTables//-----находим все ементы таблицы с айди пользователя который сделала запрос

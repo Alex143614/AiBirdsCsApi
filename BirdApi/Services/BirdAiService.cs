@@ -8,11 +8,10 @@ public class BirdAiService
 {
     private readonly HttpClient _httpClient;
 
-    // Теперь адрес не const, а читается из конфигурации
     public BirdAiService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
-        var baseUrl = configuration["BirdAiService:BaseUrl"] ?? "http://127.0.0.1:8000";
+        var baseUrl = configuration = "http://127.0.0.1:8000";
         _httpClient.BaseAddress = new Uri(baseUrl);
         _httpClient.Timeout = TimeSpan.FromMinutes(3);
     }
